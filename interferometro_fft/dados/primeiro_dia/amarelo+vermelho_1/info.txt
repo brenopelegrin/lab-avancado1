@@ -1,0 +1,7 @@
+qtd_pontos=4096
+tempo=50 # ms
+
+lasers=['amarelo', 'vermelho']
+comprimentos=[594.1, 632.8] # nm
+
+pico_calibracao = 214 # nm
