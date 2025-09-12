@@ -1,0 +1,18 @@
+## Observações
+
+Esses dados foram feitos nos "45 do segundo tempo", acabando o expediente.
+
+Acredito que eu tenha cometido um erro nas medidas de posições, com erro de 0.5cm em cada medida.
+
+Ao invés de medir "10.5, 20.5, 30.5, etc" eu medi "10.5, 21.0, 31.0, etc" mas anotei "10.5, 20.5, 30.5, etc".
+
+Caso necessário, fazer essa correção de 0.5 cm.
+
+Eu já fiz a correção nos dados do vidro, mas não tenho certeza se cometi esse erro nos dados do ar.
+
+De toda forma, os 0.5 cm de diferença são pouco significativos, visto que a fase não mudava muito para essa
+variação de distância (21.0 para 20.5, por exemplo).
+
+## Sobre o experimento
+
+Esses experimentos foram feitos com a lente diferente, que focalizava o LED em um ponto menor.

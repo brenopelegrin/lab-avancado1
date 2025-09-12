@@ -1,0 +1,10 @@
+## Observações
+
+Esses dados estão inconclusivos e provavelmente errados.
+
+Houveram diversos problemas experimentais:
+- A luz não estava corretamente focalizada no detector
+- Ainda havia sinal mesmo tampando o LED
+- A fase estava variando muito
+- A separação entre as distâncias de teste não era uniforme
+- Alguns dados estão incompletos pois paramos no meio do experimento ao perceber os problemas citados acima.

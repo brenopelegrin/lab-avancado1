@@ -1,0 +1,6 @@
+## Distâncias
+d_metal é a distância medida com a régua de metal onde o laser está apoiado
+
+a distância do aparelho até o fim da régua é 12.7 cm
+
+
