@@ -1,6 +1,7 @@
 ## Distâncias
-d_metal é a distância medida com a régua de metal onde o laser está apoiado
-
-a distância do aparelho até o fim da régua é 12.7 cm
-
-
+- d_metal é a distância medida com a régua de metal onde o laser está apoiado
+- a distância do aparelho até o fim da régua é 12.7 cm
+- a distância real do aparelho até o laser é 12.7 + (100 - d_metal) centímetros.
+- consideramos que a luz do LED sai exatamente do fim do "container" do LED, ao invés de
+  considerá-lo um corpo extenso. Assim, a distância d_metal é exatamente a posição da "saída"
+  da luz do LED em relação à régua.
