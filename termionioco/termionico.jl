@@ -7,168 +7,185 @@ using InteractiveUtils
 # ╔═╡ 2b8b38e4-b755-11f0-a896-a12163a0502e
 begin
 	using Plots
+	using Printf
 	using LsqFit
+	using Unitful
 	using LaTeXStrings
+	using Unitful.DefaultSymbols
 end
 
 # ╔═╡ 4f238244-6b34-4ebc-87a2-a9b3e76ec417
 md"## **Efeito termiônico (Lei de Child-Langmuir)**"
 
 # ╔═╡ ad80671b-8318-4fbf-9d1b-617b2fd592f4
-registros_child_langmur = [(
-        temperatura=1538,
-        filamento=4.307,
-        polos=[
-            (V=5.0, I=10.650e-6),
-            (V=7.2, I=18.3450e-6),
-            (V=10.5, I=30.140e-6),
-            (V=14.8, I=40.777e-6),
-            (V=20.0, I=48.023e-6),
-            (V=30.0, I=53.512e-6),
-            (V=40.3, I=55.073e-6),
-            (V=50.5, I=56.250e-6),
-            (V=60.0, I=57.160e-6),
-            (V=70.3, I=56.908e-6),
-            (V=80.1, I=57.360e-6),
-            (V=100.7, I=57.980e-6),
-            (V=120.5, I=58.8338e-6),
-            (V=141.0, I=58.760e-6),
-            (V=180.7, I=59.760e-6),
-            (V=200.2, I=60.095e-6),
-            (V=250.8, I=60.220e-6),
-            (V=300.8, I=61.414e-6),
-            (V=350.0, I=61.975e-6),
-            (V=400.9, I=62.420e-6),
-            (V=450.4, I=62.810e-6),
-            (V=500.4, I=63.375e-6)
-        ]
-    ),(
-        temperatura=1700,
-        filamento=5.470,
-        polos=[
-            (V=5.0, I=27.937e-6),
-            (V=10.1, I=78.580e-6),
-            (V=15.0, I=141.150e-6),
-            (V=20.1, I=0.21738e-3),
-            (V=25.0, I=0.29074e-3),
-            (V=30.2, I=0.36885e-3),
-            (V=35.0, I=0.42345e-3),
-            (V=40.0, I=0.47200e-3),
-            (V=44.9, I=0.50585e-3),
-            (V=50.0, I=0.53100e-3),
-            (V=54.7, I=0.56570e-3),
-            (V=60.0, I=0.60027e-3),
-            (V=70.5, I=0.61150e-3),
-            (V=81.0, I=0.61140e-3),
-            (V=90.4, I=0.61820e-3),
-            (V=100.8, I=0.61520e-3),
-            (V=110.3, I=0.62030e-3),
-            (V=120.4, I=0.63040e-3),
-            (V=140.0, I=0.6200e-3),
-            (V=160.3, I=0.60750e-3),
-            (V=180.0, I=0.62600e-3),
-            (V=200.5, I=0.59200e-3),
-            (V=249.5, I=0.61600e-3),
-            (V=300.4, I=0.58750e-3),
-            (V=350.3, I=0.59721e-3),
-            (V=400.8, I=0.61230e-3),
-            (V=449.7, I=0.62310e-3),
-            (V=500.1, I=0.62470e-3)
-        ]
-    ),
-    (
-        temperatura=1810,
-        filamento=6.448,
-        polos=[
-            (V=10.0, I=100.872e-6),
-            (V=19.7, I=0.28035e-3),
-            (V=30.0, I=0.5265e-3),
-            (V=40.1, I=0.8990e-3),
-            (V=50.5, I=1.12140e-3),
-            (V=60.0, I=1.41430e-3),
-            (V=70.3, I=1.70420e-3),
-            (V=80.1, I=1.97650e-3),
-            (V=90.4, I=2.2400e-3),
-            (V=100.2, I=2.4500e-3),
-            (V=110.1, I=2.620e-3),
-            (V=120.3, I=2.717e-3),
-            (V=129.7, I=2.7205e-3),
-            (V=140.7, I=2.7360e-3),
-            (V=159.7, I=2.9234e-3),
-            (V=180.7, I=3.0700e-3),
-            (V=200.3, I=3.1220e-3),
-            (V=250.6, I=3.1470e-3),
-            (V=300.3, I=3.0830e-3),
-            (V=351.3, I=3.2085e-3),
-            (V=400.4, I=3.1785e-3),
-            (V=450.2, I=3.2580e-3),
-            (V=500.2, I=3.2845e-3)
-        ]
-    ),
-    (
-        temperatura=1830,
-        filamento=6.498,
-        polos=[
-            (V=10.0, I=105.780e-6),
-            (V=20.0, I=0.29122e-3),
-            (V=30.0, I=0.53170e-3),
-            (V=40.0, I=0.81940e-3),
-            (V=50.0, I=1.12539e-3),
-            (V=60.2, I=1.444490e-3),
-            (V=70.3, I=1.77130e-3),
-            (V=80.0, I=2.0540e-3),
-            (V=90.3, I=2.2930e-3),
-            (V=95.5, I=2.3901e-3),
-            (V=101.0, I=2.4800e-3),
-            (V=105.4, I=2.6270e-3),
-            (V=110.1, I=2.6300e-3),
-            (V=115.2, I=2.7060e-3),
-            (V=120.0, I=2.7990e-3),
-            (V=140.1, I=3.0700e-3),
-            (V=160.1, I=3.1480e-3),
-            (V=180.2, I=3.2810e-3),
-            (V=200.1, I=3.3240e-3),
-            (V=250.0, I=3.3780e-3),
-            (V=300.3, I=3.3945e-3),
-            (V=350.1, I=3.4267e-3),
-            (V=400.2, I=3.4458e-3),
-            (V=450.0, I=3.4710e-3),
-            (V=500.0, I=3.5013e-3)
-        ]
-    ),
-    (
-        temperatura=1610,
-        filamento=4.998,
-        polos=[
-            (V=5.0, I=16.8240e-6),
-            (V=10.0, I=50.570e-6),
-            (V=15.0, I=84.170e-6),
-            (V=20.1, I=119.777e-6),
-            (V=25.2, I=130.379e-6),
-            (V=30.0, I=149.073e-6),
-            (V=35.0, I=154.830e-6),
-            (V=40.2, I=160.668e-6),
-            (V=45.0, I=160.777e-6),
-            (V=50.6, I=168.550e-6),
-            (V=55.0, I=169.790e-6),
-            (V=60.0, I=173.794e-6),
-            (V=80.1, I=172.800e-6),
-            (V=100.6, I=175.130e-6),
-            (V=120.2, I=177.160e-6),
-            (V=140.2, I=179.970e-6),
-            (V=160.0, I=183.100e-6),
-            (V=180.3, I=183.810e-6),
-            (V=200.7, I=183.810e-6),
-            (V=250.1, I=185.405e-6),
-            (V=300.2, I=188.450e-6),
-            (V=350.2, I=188.170e-6),
-            (V=400.6, I=190.460e-6),
-            (V=450.3, I=190.410e-6),
-            (V=500.0, I=191.288e-6)
-        ]
-    )
-]
+begin 
+	registros_child_langmur = [(
+	        temperatura=1538,
+	        filamento=4.307,
+	        polos=[
+	            (V=5.0, I=10.650e-6),
+	            (V=7.2, I=18.3450e-6),
+	            (V=10.5, I=30.140e-6),
+	            (V=14.8, I=40.777e-6),
+	            (V=20.0, I=48.023e-6),
+	            (V=30.0, I=53.512e-6),
+	            (V=40.3, I=55.073e-6),
+	            (V=50.5, I=56.250e-6),
+	            (V=60.0, I=57.160e-6),
+	            (V=70.3, I=56.908e-6),
+	            (V=80.1, I=57.360e-6),
+	            (V=100.7, I=57.980e-6),
+	            (V=120.5, I=58.8338e-6),
+	            (V=141.0, I=58.760e-6),
+	            (V=180.7, I=59.760e-6),
+	            (V=200.2, I=60.095e-6),
+	            (V=250.8, I=60.220e-6),
+	            (V=300.8, I=61.414e-6),
+	            (V=350.0, I=61.975e-6),
+	            (V=400.9, I=62.420e-6),
+	            (V=450.4, I=62.810e-6),
+	            (V=500.4, I=63.375e-6)
+	        ]
+	    ),(
+	        temperatura=1700,
+	        filamento=5.470,
+	        polos=[
+	            (V=5.0, I=27.937e-6),
+	            (V=10.1, I=78.580e-6),
+	            (V=15.0, I=141.150e-6),
+	            (V=20.1, I=0.21738e-3),
+	            (V=25.0, I=0.29074e-3),
+	            (V=30.2, I=0.36885e-3),
+	            (V=35.0, I=0.42345e-3),
+	            (V=40.0, I=0.47200e-3),
+	            (V=44.9, I=0.50585e-3),
+	            (V=50.0, I=0.53100e-3),
+	            (V=54.7, I=0.56570e-3),
+	            (V=60.0, I=0.60027e-3),
+	            (V=70.5, I=0.61150e-3),
+	            (V=81.0, I=0.61140e-3),
+	            (V=90.4, I=0.61820e-3),
+	            (V=100.8, I=0.61520e-3),
+	            (V=110.3, I=0.62030e-3),
+	            (V=120.4, I=0.63040e-3),
+	            (V=140.0, I=0.6200e-3),
+	            (V=160.3, I=0.60750e-3),
+	            (V=180.0, I=0.62600e-3),
+	            (V=200.5, I=0.59200e-3),
+	            (V=249.5, I=0.61600e-3),
+	            (V=300.4, I=0.58750e-3),
+	            (V=350.3, I=0.59721e-3),
+	            (V=400.8, I=0.61230e-3),
+	            (V=449.7, I=0.62310e-3),
+	            (V=500.1, I=0.62470e-3)
+	        ]
+	    ),
+	    (
+	        temperatura=1810,
+	        filamento=6.448,
+	        polos=[
+	            (V=10.0, I=100.872e-6),
+	            (V=19.7, I=0.28035e-3),
+	            (V=30.0, I=0.5265e-3),
+	            (V=40.1, I=0.8990e-3),
+	            (V=50.5, I=1.12140e-3),
+	            (V=60.0, I=1.41430e-3),
+	            (V=70.3, I=1.70420e-3),
+	            (V=80.1, I=1.97650e-3),
+	            (V=90.4, I=2.2400e-3),
+	            (V=100.2, I=2.4500e-3),
+	            (V=110.1, I=2.620e-3),
+	            (V=120.3, I=2.717e-3),
+	            (V=129.7, I=2.7205e-3),
+	            (V=140.7, I=2.7360e-3),
+	            (V=159.7, I=2.9234e-3),
+	            (V=180.7, I=3.0700e-3),
+	            (V=200.3, I=3.1220e-3),
+	            (V=250.6, I=3.1470e-3),
+	            (V=300.3, I=3.0830e-3),
+	            (V=351.3, I=3.2085e-3),
+	            (V=400.4, I=3.1785e-3),
+	            (V=450.2, I=3.2580e-3),
+	            (V=500.2, I=3.2845e-3)
+	        ]
+	    ),
+	    (
+	        temperatura=1830,
+	        filamento=6.498,
+	        polos=[
+	            (V=10.0, I=105.780e-6),
+	            (V=20.0, I=0.29122e-3),
+	            (V=30.0, I=0.53170e-3),
+	            (V=40.0, I=0.81940e-3),
+	            (V=50.0, I=1.12539e-3),
+	            (V=60.2, I=1.444490e-3),
+	            (V=70.3, I=1.77130e-3),
+	            (V=80.0, I=2.0540e-3),
+	            (V=90.3, I=2.2930e-3),
+	            (V=95.5, I=2.3901e-3),
+	            (V=101.0, I=2.4800e-3),
+	            (V=105.4, I=2.6270e-3),
+	            (V=110.1, I=2.6300e-3),
+	            (V=115.2, I=2.7060e-3),
+	            (V=120.0, I=2.7990e-3),
+	            (V=140.1, I=3.0700e-3),
+	            (V=160.1, I=3.1480e-3),
+	            (V=180.2, I=3.2810e-3),
+	            (V=200.1, I=3.3240e-3),
+	            (V=250.0, I=3.3780e-3),
+	            (V=300.3, I=3.3945e-3),
+	            (V=350.1, I=3.4267e-3),
+	            (V=400.2, I=3.4458e-3),
+	            (V=450.0, I=3.4710e-3),
+	            (V=500.0, I=3.5013e-3)
+	        ]
+	    ),
+	    (
+	        temperatura=1610,
+	        filamento=4.998,
+	        polos=[
+	            (V=5.0, I=16.8240e-6),
+	            (V=10.0, I=50.570e-6),
+	            (V=15.0, I=84.170e-6),
+	            (V=20.1, I=119.777e-6),
+	            (V=25.2, I=130.379e-6),
+	            (V=30.0, I=149.073e-6),
+	            (V=35.0, I=154.830e-6),
+	            (V=40.2, I=160.668e-6),
+	            (V=45.0, I=160.777e-6),
+	            (V=50.6, I=168.550e-6),
+	            (V=55.0, I=169.790e-6),
+	            (V=60.0, I=173.794e-6),
+	            (V=80.1, I=172.800e-6),
+	            (V=100.6, I=175.130e-6),
+	            (V=120.2, I=177.160e-6),
+	            (V=140.2, I=179.970e-6),
+	            (V=160.0, I=183.100e-6),
+	            (V=180.3, I=183.810e-6),
+	            (V=200.7, I=183.810e-6),
+	            (V=250.1, I=185.405e-6),
+	            (V=300.2, I=188.450e-6),
+	            (V=350.2, I=188.170e-6),
+	            (V=400.6, I=190.460e-6),
+	            (V=450.3, I=190.410e-6),
+	            (V=500.0, I=191.288e-6)
+	        ]
+	    )
+	]
+	initial_guesses_fitting = Dict(
+    1538 => [20.0, 0.5],
+    1610 => [30.0, 1.1],
+    1700 => [50.0, 1.7],
+    1810 => [100.0, 3.0],
+    1830 => [100.0, 3.5],
+	)
+	temps = sort(collect(keys(initial_guesses_fitting)))
+n_temps = length(temps)
 
+colors = range(colorant"blue", colorant"red", length = n_temps)
+temp_to_color = Dict(t => c for (t, c) in zip(temps, colors))
+
+end
 
 # ╔═╡ b461344c-504d-40ea-bbad-1fc088662110
 md"""
@@ -177,22 +194,8 @@ md"""
 
 # ╔═╡ 55d5a8ee-e4a7-4681-a178-9beb1f31fc71
 begin
-
-initial_guesses_fitting = Dict(
-    1538 => [20.0, 0.5],
-    1610 => [30.0, 1.1],
-    1700 => [50.0, 1.7],
-    1810 => [100.0, 3.0],
-    1830 => [100.0, 3.5],
-)
-
+	
 @. child_langmuir(V, p) = ifelse(V > p[1], p[2] * p[1]^(3/2), p[2] * V^(3/2))
-
-temps = sort(collect(keys(initial_guesses_fitting)))
-n_temps = length(temps)
-
-colors = range(colorant"blue", colorant"red", length = n_temps)
-temp_to_color = Dict(t => c for (t, c) in zip(temps, colors))
 
 fig = plot(
     xlabel = "Tensão (V)",
@@ -254,26 +257,25 @@ md"""
 """
 
 # ╔═╡ aa557509-7581-4c89-b0cb-f5fc9a0c46c2
-
-begin
+let
     plots = [] 
     sorted_registros = sort(registros_child_langmur, by=x -> x.temperatura)
-	@. power_law(V,params)=params[1]*V^(3/2)
+	@. power_law(V,params)=params[1]*V^params[2]
 
 	
-    for (temperatura, filamento, polos) in sorted_registros
+    for (temperatura, filamento, polos) in sorted_registros[3:end]
         (voltagem_sat, corrente_sat) = saturação_info[temperatura]
         current_color=temp_to_color[temperatura]
-        voltagens = [x.V for x in polos if x.V<=voltagem_sat]
-        correntes = [x.I*1e3 for x in polos[1:length(voltagens)]]
-		fit=curve_fit(power_law,voltagens,correntes,[1.0])
+        voltagens = [x.V for x in polos if x.V<=0.6voltagem_sat]
+        correntes = [x.I*1e6 for x in polos[1:length(voltagens)]]
+		fit=curve_fit(power_law,voltagens,correntes,[1.0,1.0])
+		params=coef(fit)
         p = scatter(voltagens, 
 					correntes, 
 					title="Temperatura: $temperatura (ºC)",
 					color=current_color,
-					label=nothing,
-				   	xscale=:log10,
-				   	yscale=:log10)
+					label=@sprintf("I=%.2f V^(%.2f)",params...),
+				   legendfontsize=12)
 		voltages_range=range(minimum(voltagens),maximum(voltagens),500)
 		plot!(p,voltages_range,
 			  power_law(voltages_range,coef(fit)),
@@ -283,7 +285,7 @@ begin
     end 
     all_plots=plot(plots..., 
 				   layout = (1, length(plots)),
-				   size=(2000,600),
+				   size=(1500,600),
 				   dpi=150,
 				  xlabel="Tensão (V)",
 				  ylabel=L"Corrente ($\mu$A)",
@@ -293,14 +295,69 @@ begin
 	all_plots
 end
 
+# ╔═╡ 1d2aed94-cd07-484d-afc9-0f84610f9562
+md"""
+## Corrente saturação vs Temperatura
+"""
+
+# ╔═╡ 1944d819-d260-4ab4-b0b0-959acaac4e24
+let
+    local_raio = 3 * u"cm" 
+    local_area = π * local_raio^2
+    plt = plot(
+        xlabel="Temperatura",
+        ylabel="Densidade de corrente de Saturação",
+        yscale = :log10, 
+        legend = :bottomright
+    )
+
+    @. richardson(T, params) = params[1] * (T^2) * exp(-params[2] / T)
+
+    temperaturas_K = typeof(1.0u"K")[]
+    correntes_J = typeof(1.0u"A/m^2")[]
+
+    for (temperatura, filamento, polos) in registros_child_langmur
+        index = findfirst(x -> x.V >= 300, polos) 
+        if index !== nothing
+            current_A = polos[index].I * u"A"
+            temp_C = temperatura * u"°C"
+            temp_K = uconvert(u"K", temp_C)
+            current_density_J = current_A / local_area
+            push!(correntes_J, current_density_J)
+            push!(temperaturas_K, temp_K)
+        end
+    end 
+    
+    temperaturas_fit = [ustrip(u"K",T) for T in temperaturas_K]
+    correntes_fit = [ustrip(u"A/m^2", J) for J in correntes_J]
+
+    fit = curve_fit(richardson, temperaturas_fit, correntes_fit, [1.0, 1.0])
+    params = coef(fit)
+    
+    scatter!(plt, temperaturas_K, correntes_J, label="Dados")
+
+    temp_range_K = range(minimum(temperaturas_K), maximum(temperaturas_K), 100)
+    
+    J_fit_values = richardson(ustrip(temp_range_K), params)
+    
+    plot!(plt, temp_range_K, 
+          J_fit_values * u"A/m^2", 
+          label="Richardson-Dushman")
+	k=1.380649e-23
+	joule_to_ev=6.2415e18
+    println("W=$(params[2]*k*joule_to_ev)")
+	println("A=$(params[1])")
+    savefig(plt, "richardson-dushman.png")
+    plt
+end
+
 # ╔═╡ f4e05b9a-130a-438d-a0e9-3fa87a99711f
 md"""
 ## Tensão vs Temperatura no filamento 
 """
 
 # ╔═╡ 90e1aa89-f87b-448a-a276-2907b67fffcf
-
-begin
+let
     fig_filamento = plot(
         xlabel="Tensão no Filamento (V)",
         ylabel="Temperatura no Filamento (ºC)",
@@ -335,11 +392,14 @@ PLUTO_PROJECT_TOML_CONTENTS = """
 LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
 LsqFit = "2fda8390-95c7-5789-9bda-21331edee243"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [compat]
 LaTeXStrings = "~1.4.0"
 LsqFit = "~0.15.1"
 Plots = "~1.41.1"
+Unitful = "~1.25.1"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -348,7 +408,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.12.1"
 manifest_format = "2.0"
-project_hash = "43dcc43df6a466a24dbbaccf10faa0f22808189a"
+project_hash = "a8ca5df82505e4c6efdd7529c356cc5b18edc53d"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "27cecae79e5cc9935255f90c53bb831cc3c870d7"
@@ -1475,6 +1535,27 @@ git-tree-sha1 = "53915e50200959667e78a92a418594b428dffddf"
 uuid = "1cfade01-22cf-5700-b092-accc4b62d6e1"
 version = "0.4.1"
 
+[[deps.Unitful]]
+deps = ["Dates", "LinearAlgebra", "Random"]
+git-tree-sha1 = "83360bda12f61c250835830cc40b64f487cc2230"
+uuid = "1986cc42-f94f-5a68-af5c-568840ba703d"
+version = "1.25.1"
+
+    [deps.Unitful.extensions]
+    ConstructionBaseUnitfulExt = "ConstructionBase"
+    ForwardDiffExt = "ForwardDiff"
+    InverseFunctionsUnitfulExt = "InverseFunctions"
+    LatexifyExt = ["Latexify", "LaTeXStrings"]
+    PrintfExt = "Printf"
+
+    [deps.Unitful.weakdeps]
+    ConstructionBase = "187b0558-2788-49d3-abe0-74a17ed4e7c9"
+    ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
+    InverseFunctions = "3587e190-3f89-42d0-90ee-14403ec27112"
+    LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
+    Latexify = "23fbe1c1-3f47-55db-b15f-69d7ec21a316"
+    Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+
 [[deps.Unzip]]
 git-tree-sha1 = "ca0969166a028236229f63514992fc073799bb78"
 uuid = "41fe7b60-77ed-43a1-b4f0-825fd5a5650d"
@@ -1752,10 +1833,12 @@ version = "1.9.2+0"
 # ╟─4f238244-6b34-4ebc-87a2-a9b3e76ec417
 # ╟─ad80671b-8318-4fbf-9d1b-617b2fd592f4
 # ╟─b461344c-504d-40ea-bbad-1fc088662110
-# ╠═55d5a8ee-e4a7-4681-a178-9beb1f31fc71
+# ╟─55d5a8ee-e4a7-4681-a178-9beb1f31fc71
 # ╟─f2fd530a-c053-4d7e-99fa-eb7857ac3568
 # ╠═aa557509-7581-4c89-b0cb-f5fc9a0c46c2
+# ╟─1d2aed94-cd07-484d-afc9-0f84610f9562
+# ╠═1944d819-d260-4ab4-b0b0-959acaac4e24
 # ╟─f4e05b9a-130a-438d-a0e9-3fa87a99711f
-# ╠═90e1aa89-f87b-448a-a276-2907b67fffcf
+# ╟─90e1aa89-f87b-448a-a276-2907b67fffcf
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
