@@ -170,6 +170,11 @@ registros_child_langmur = [(
 ]
 
 
+# ╔═╡ b461344c-504d-40ea-bbad-1fc088662110
+md"""
+## Curva antes/pós saturação
+"""
+
 # ╔═╡ 55d5a8ee-e4a7-4681-a178-9beb1f31fc71
 begin
 
@@ -202,6 +207,8 @@ fig = plot(
     legendfontsize = 10,
 )
 
+saturação_info=Dict()
+	
 for (temperatura, filamento, polos) in sort!(registros_child_langmur, by=x -> x.temperatura)
     voltages = [p.V for p in polos]
     currents = [p.I * 1e3 for p in polos] 
@@ -226,7 +233,8 @@ for (temperatura, filamento, polos) in sort!(registros_child_langmur, by=x -> x.
 
     V_saturação = coef(fit)[1]
     I_saturação = child_langmuir(V_saturação, coef(fit))
-    
+    saturação_info[temperatura]=(voltagem=V_saturação,
+						   corrente=I_saturação)
     scatter!(fig, [V_saturação], [I_saturação],
         marker = :x,
         color = current_color,
@@ -240,21 +248,85 @@ savefig(fig,"child-langmuir.png")
 fig
 end
 
+# ╔═╡ f2fd530a-c053-4d7e-99fa-eb7857ac3568
+md"""
+## Curva antes saturação
+"""
+
+# ╔═╡ aa557509-7581-4c89-b0cb-f5fc9a0c46c2
+
+begin
+    plots = [] 
+    sorted_registros = sort(registros_child_langmur, by=x -> x.temperatura)
+	@. power_law(V,params)=params[1]*V^(3/2)
+
+	
+    for (temperatura, filamento, polos) in sorted_registros
+        (voltagem_sat, corrente_sat) = saturação_info[temperatura]
+        current_color=temp_to_color[temperatura]
+        voltagens = [x.V for x in polos if x.V<=voltagem_sat]
+        correntes = [x.I*1e3 for x in polos[1:length(voltagens)]]
+		fit=curve_fit(power_law,voltagens,correntes,[1.0])
+        p = scatter(voltagens, 
+					correntes, 
+					title="Temperatura: $temperatura (ºC)",
+					color=current_color,
+					label=nothing,
+				   	xscale=:log10,
+				   	yscale=:log10)
+		voltages_range=range(minimum(voltagens),maximum(voltagens),500)
+		plot!(p,voltages_range,
+			  power_law(voltages_range,coef(fit)),
+			  color=current_color,
+			 label=nothing)
+        push!(plots, p)
+    end 
+    all_plots=plot(plots..., 
+				   layout = (1, length(plots)),
+				   size=(2000,600),
+				   dpi=150,
+				  xlabel="Tensão (V)",
+				  ylabel=L"Corrente ($\mu$A)",
+				  bottom_margin = 10Plots.mm,
+                 left_margin = 10Plots.mm)
+	savefig(all_plots,"antes_da_saturação.png")
+	all_plots
+end
+
+# ╔═╡ f4e05b9a-130a-438d-a0e9-3fa87a99711f
+md"""
+## Tensão vs Temperatura no filamento 
+"""
+
 # ╔═╡ 90e1aa89-f87b-448a-a276-2907b67fffcf
-begin 
-	fig_filamento=plot(
-		xlabel="Tensão no Filamento (V)",
-		ylabel="Temperatura no Filamento (ºC)"
-	)
-	
-	
-	plot!(fig_filamento,
-	[x.filamento for x in registros_child_langmur],
-	[x.temperatura for x in registros_child_langmur],
-			 marker = 
-    markersize = 5
-	)
-	fig_filamento
+
+begin
+    fig_filamento = plot(
+        xlabel="Tensão no Filamento (V)",
+        ylabel="Temperatura no Filamento (ºC)",
+		dpi=300
+    )
+    @. linear_fit(V, params) = params[1] * V + params[2]
+
+    voltagens = [x.filamento for x in registros_child_langmur]
+    temperaturas = [x.temperatura for x in registros_child_langmur]
+    
+    scatter!(fig_filamento,
+             voltagens,
+             temperaturas,
+			 colors=[temp_to_color[t] for t in temperaturas],
+             label="Dados") 
+    p0 = [1.0, 0.0] 
+    fit = curve_fit(linear_fit, voltagens, temperaturas, p0)
+    params_fit = coef(fit)
+    plot!(fig_filamento,
+          voltagens,
+          linear_fit(voltagens, params_fit),
+          label="Ajuste Linear", 
+          color=:red,
+          linewidth=2)
+    savefig(fig_filamento,"tensão_vs_temperatura.png")
+    fig_filamento
 end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
@@ -1679,7 +1751,11 @@ version = "1.9.2+0"
 # ╠═2b8b38e4-b755-11f0-a896-a12163a0502e
 # ╟─4f238244-6b34-4ebc-87a2-a9b3e76ec417
 # ╟─ad80671b-8318-4fbf-9d1b-617b2fd592f4
+# ╟─b461344c-504d-40ea-bbad-1fc088662110
 # ╠═55d5a8ee-e4a7-4681-a178-9beb1f31fc71
+# ╟─f2fd530a-c053-4d7e-99fa-eb7857ac3568
+# ╠═aa557509-7581-4c89-b0cb-f5fc9a0c46c2
+# ╟─f4e05b9a-130a-438d-a0e9-3fa87a99711f
 # ╠═90e1aa89-f87b-448a-a276-2907b67fffcf
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
