@@ -12,6 +12,7 @@ begin
 	using Unitful
 	using LaTeXStrings
 	using Unitful.DefaultSymbols
+	using Statistics
 end
 
 # ╔═╡ 4f238244-6b34-4ebc-87a2-a9b3e76ec417
@@ -172,17 +173,9 @@ begin
 	        ]
 	    )
 	]
-	initial_guesses_fitting = Dict(
-    1538 => [20.0, 0.5],
-    1610 => [30.0, 1.1],
-    1700 => [50.0, 1.7],
-    1810 => [100.0, 3.0],
-    1830 => [100.0, 3.5],
-	)
-	temps = sort(collect(keys(initial_guesses_fitting)))
-n_temps = length(temps)
+	temps = range(1500,1830,step=1)
 
-colors = range(colorant"blue", colorant"red", length = n_temps)
+colors = range(colorant"blue", colorant"red", length = length(temps))
 temp_to_color = Dict(t => c for (t, c) in zip(temps, colors))
 
 end
@@ -195,7 +188,6 @@ md"""
 # ╔═╡ 55d5a8ee-e4a7-4681-a178-9beb1f31fc71
 begin
 	
-@. child_langmuir(V, p) = ifelse(V > p[1], p[2] * p[1]^(3/2), p[2] * V^(3/2))
 
 fig = plot(
     xlabel = "Tensão (V)",
@@ -210,40 +202,37 @@ fig = plot(
     legendfontsize = 10,
 )
 
+saturação_points=Dict(
+	1538 => 7,
+	1610 => 12,
+	1700 => 13,
+	1810 => 13,
+	1830 => 16
+)
+
 saturação_info=Dict()
 	
 for (temperatura, filamento, polos) in sort!(registros_child_langmur, by=x -> x.temperatura)
     voltages = [p.V for p in polos]
     currents = [p.I * 1e3 for p in polos] 
     current_color = temp_to_color[temperatura]
-    current_label = "$temperatura"
+    index=saturação_points[temperatura]
+	saturação_info[temperatura]=(voltages[index],currents[index])
+	scatter!(fig,[voltages[index]],[currents[index]],
+			color=current_color,
+			marker=:x,
+			label=nothing,
+			markersize=10)
 
-    scatter!(fig, voltages, currents,
+	
+    plot!(fig, voltages, currents,
         color = current_color,
-        label = nothing,
+        label = temperatura,
+		marker=:o,
         markersize = 4
     )
 
-    fit = curve_fit(child_langmuir, voltages, currents, initial_guesses_fitting[temperatura])
-    V_fit = range(minimum(voltages), maximum(voltages), length = 200)
-    I_fit = child_langmuir(V_fit, coef(fit))
 
-    plot!(fig, V_fit, I_fit,
-        color = current_color,
-        label = current_label,
-        linewidth = 2
-    )
-
-    V_saturação = coef(fit)[1]
-    I_saturação = child_langmuir(V_saturação, coef(fit))
-    saturação_info[temperatura]=(voltagem=V_saturação,
-						   corrente=I_saturação)
-    scatter!(fig, [V_saturação], [I_saturação],
-        marker = :x,
-        color = current_color,
-        markersize = 8,
-        label = nothing 
-    )
 end
 
 
@@ -266,7 +255,7 @@ let
     for (temperatura, filamento, polos) in sorted_registros[3:end]
         (voltagem_sat, corrente_sat) = saturação_info[temperatura]
         current_color=temp_to_color[temperatura]
-        voltagens = [x.V for x in polos if x.V<=0.6voltagem_sat]
+        voltagens = [x.V for x in polos if x.V<=0.4*voltagem_sat]
         correntes = [x.I*1e6 for x in polos[1:length(voltagens)]]
 		fit=curve_fit(power_law,voltagens,correntes,[1.0,1.0])
 		params=coef(fit)
@@ -307,7 +296,6 @@ let
     plt = plot(
         xlabel="Temperatura",
         ylabel="Densidade de corrente de Saturação",
-        yscale = :log10, 
         legend = :bottomright
     )
 
@@ -318,14 +306,13 @@ let
 
     for (temperatura, filamento, polos) in registros_child_langmur
         index = findfirst(x -> x.V >= 300, polos) 
-        if index !== nothing
-            current_A = polos[index].I * u"A"
-            temp_C = temperatura * u"°C"
-            temp_K = uconvert(u"K", temp_C)
-            current_density_J = current_A / local_area
-            push!(correntes_J, current_density_J)
-            push!(temperaturas_K, temp_K)
-        end
+		current_A = polos[index].I * u"A"
+		temp_C = temperatura * u"°C"
+		temp_K = uconvert(u"K", temp_C)
+		current_density_J = current_A / local_area
+		push!(correntes_J, current_density_J)
+		push!(temperaturas_K, temp_K)
+
     end 
     
     temperaturas_fit = [ustrip(u"K",T) for T in temperaturas_K]
@@ -386,6 +373,158 @@ let
     fig_filamento
 end
 
+# ╔═╡ 081c83c4-89d3-4a5d-a0ef-1d3d8de3776b
+md"""
+## Razão $\frac{e}{m}$
+"""
+
+# ╔═╡ 25a1c697-8fea-4ceb-9a53-dd579d9a3f91
+let
+	registros_e_over_m=[
+		 (temperatura=1524,
+		 filamento=4.2,
+	      medidas=[
+	         (0.411,8.8e-6),
+	         (0.36,8.86e-6),
+	         (0.309,8.82e-6),
+	         (0.209,8.80e-6),
+	         (0.093,8.74e-6),
+	         (0.443,8.73e-6),
+	         (0.510,8.6e-6),
+	         (0.55,8.5e-6),
+	         (0.627,8.4e-6),
+	         (0.703,8.2e-6),
+	         (0.833,7.91e-6),
+	         (0.904,7.69e-6),
+	         (1.01,7.2e-6),
+	         (1.118,6.8e-6),
+	         (1.207,6.5e-6),
+	         (1.335,6.07e-6),
+	         (1.441,5.7e-6),
+	         (1.511,5.53e-6),
+	         (1.613,5.27e-6),
+	         (1.72,4.96e-6),
+	         (1.814,4.76e-6),
+	         (1.983,4.40e-6)
+	         ]
+		 ),
+	    (temperatura=1625,
+		 filamento=4.2,
+	     medidas=[
+	      (0.403,16.026e-6),
+	      (0.346,16.1146e-6),
+	      (0.289,16.1409e-6),
+	      (0.216,16.2009e-6),
+	      (0.102,16.13e-6),
+	      (0.457,15.9e-6),
+	      (0.514,15.69e-6),
+	      (0.560,15.53e-6),
+	      (0.611,15.2994e-6),
+	      (0.730,14.64e-6),
+	      (0.811,14.1124e-6),
+	      (0.903,13.346e-6),
+	      (1.022,12.2794e-6),
+	      (1.140,11.2300e-6),
+	      (1.250,10.3269e-6),
+	      (1.342,9.6744e-6),
+	      (1.443,9.0043e-6),
+	      (1.543,8.4556e-6),
+	      (1.680,7.8862e-6),
+	      (1.781,7.4526e-6),
+	      (1.892,7.0e-6),
+	      (1.986,6.72e-6)
+	      ]
+		),
+	    (temperatura=1727,
+		 filamento=4.3,
+	     medidas=[
+	      (0.048,15.2172e-6),
+	      (0.141,15.2670e-6),
+	      (0.254,15.3600e-6),
+	      (0.350,15.4270e-6),
+	      (0.460,15.4340e-6),
+	      (0.564,15.4120e-6),
+	      (0.673,15.2130e-6),
+	      (0.742,15.078e-6),
+	      (0.857,14.5300e-6),
+	      (0.960,13.6470e-6),
+	      (1.043,12.6107e-6),
+	      (1.117,11.7560e-6),
+	      (1.228,10.5670e-6),
+	      (1.331,9.6852e-6),
+	      (1.485,8.6337e-6),
+	      (1.583,8.1502e-6),
+	      (1.675,7.7016e-6),
+	      (1.770,7.2462e-6),
+	      (1.864,6.8600e-6),
+	      (1.969,6.4740e-6)
+	       ]
+		)
+		
+	]
+	
+	distancia_entre_polos=2e-2
+	diametro_circunferencia_polo=3e-3
+	N=130
+	raio_direto_bobina=13e-2
+	diametro_bobina=30e-2
+	μ=4π*10^-7
+	I_to_B=(4.0/5.0)^(3.0/2.0)*(N*μ/(raio_direto_bobina))
+	
+	
+	fig=plot(
+		xlabel="Campo magnético Bobinas-Helmholtz (mT)",
+		ylabel="Corrente Cátodo-Ânodo (μA)",
+		legendtitle="Temperatura (ºC)",
+		dpi=400
+	)
+	lines_per_temp=Dict(
+		1524=>(7,20),
+		1625=>(5,15),
+		1727=>(8,15)
+	)
+
+	@. linear_regression(I,params)=params[1]*I+params[2]
+
+	razao=[]
+	B_cortes=[]
+	for (temperatura,voltagem_catodo_anodo,medidas) in registros_e_over_m
+	  medidas_sort=sort(medidas)
+	  color=temp_to_color[temperatura]
+	  B_espirra=[x[1]*I_to_B*1e3 for x in medidas_sort]
+	  B_polos=[x[2]*1e6 for x in medidas_sort]
+	  scatter!(fig,B_espirra,B_polos,label=temperatura,color=color,alpha=1)
+	  (start_line,end_line)=lines_per_temp[temperatura]
+	  plot!(fig, 
+             [B_espirra[1], B_espirra[start_line+1]],  
+             [B_polos[1], B_polos[1]],
+             linestyle=:dash, 
+             alpha=0.4, 
+             color=color, 
+             label=nothing
+        )
+	  B_corte=B_espirra[start_line]*1e-3
+	  push!(B_cortes,B_corte)
+	  push!(razao,2voltagem_catodo_anodo/((2e-2B_corte)^2))
+	  B_espirra=B_espirra[start_line:end_line]
+	  B_polos=B_polos[start_line:end_line]
+	  fit=curve_fit(linear_regression,B_espirra,B_polos,[1.0,1.0])
+	  plot!(B_espirra,
+			linear_regression(B_espirra,coef(fit)),
+			label=nothing,
+			color=color,linestyle=:dash,alpha=0.4)
+	end
+	B_corte_medio=mean(B_cortes)
+	println(B_corte_medio*1e3)
+	razao_media=(2*4.2)/((2e-2*mean(B_cortes))^2)
+	println(razao_media)
+	println(razao)
+	println("Q/m_real=-1.758e-11")
+	println("Q/m=$(mean(razao))")
+	savefig("razao_e_sobre_m.png")
+	fig
+end
+
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
@@ -393,6 +532,7 @@ LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
 LsqFit = "2fda8390-95c7-5789-9bda-21331edee243"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [compat]
@@ -408,7 +548,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.12.1"
 manifest_format = "2.0"
-project_hash = "a8ca5df82505e4c6efdd7529c356cc5b18edc53d"
+project_hash = "53d193f20c5490e5868a03959866e80af6ebc622"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "27cecae79e5cc9935255f90c53bb831cc3c870d7"
@@ -1835,10 +1975,12 @@ version = "1.9.2+0"
 # ╟─b461344c-504d-40ea-bbad-1fc088662110
 # ╟─55d5a8ee-e4a7-4681-a178-9beb1f31fc71
 # ╟─f2fd530a-c053-4d7e-99fa-eb7857ac3568
-# ╠═aa557509-7581-4c89-b0cb-f5fc9a0c46c2
+# ╟─aa557509-7581-4c89-b0cb-f5fc9a0c46c2
 # ╟─1d2aed94-cd07-484d-afc9-0f84610f9562
 # ╠═1944d819-d260-4ab4-b0b0-959acaac4e24
 # ╟─f4e05b9a-130a-438d-a0e9-3fa87a99711f
 # ╟─90e1aa89-f87b-448a-a276-2907b67fffcf
+# ╟─081c83c4-89d3-4a5d-a0ef-1d3d8de3776b
+# ╟─25a1c697-8fea-4ceb-9a53-dd579d9a3f91
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
