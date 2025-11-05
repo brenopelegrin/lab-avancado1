@@ -200,6 +200,10 @@ fig = plot(
     legendtitle = "Temperatura (ºC)",
     legendtitlefontsize = 10,
     legendfontsize = 10,
+	grid = true,
+    minorgrid = true,  
+	minorgridalpha=0.3,
+	gridalpha=0.3
 )
 
 saturação_points=Dict(
@@ -252,7 +256,7 @@ let
 	@. power_law(V,params)=params[1]*V^params[2]
 
 	
-    for (temperatura, filamento, polos) in sorted_registros[3:end]
+    for (temperatura, filamento, polos) in sorted_registros[2:end]
         (voltagem_sat, corrente_sat) = saturação_info[temperatura]
         current_color=temp_to_color[temperatura]
         voltagens = [x.V for x in polos if x.V<=0.4*voltagem_sat]
@@ -273,13 +277,17 @@ let
         push!(plots, p)
     end 
     all_plots=plot(plots..., 
-				   layout = (1, length(plots)),
-				   size=(1500,600),
+				   layout = (2,2 ),
+				   size=(1000,1000),
 				   dpi=150,
 				  xlabel="Tensão (V)",
 				  ylabel=L"Corrente ($\mu$A)",
 				  bottom_margin = 10Plots.mm,
-                 left_margin = 10Plots.mm)
+                 left_margin = 10Plots.mm,
+				  grid = true,
+    			 minorgrid = true,  
+	minorgridalpha=0.3,
+	gridalpha=0.3)
 	savefig(all_plots,"antes_da_saturação.png")
 	all_plots
 end
@@ -291,12 +299,16 @@ md"""
 
 # ╔═╡ 1944d819-d260-4ab4-b0b0-959acaac4e24
 let
-    local_raio = 3 * u"cm" 
+    local_raio = 3 * u"cm"
     local_area = π * local_raio^2
     plt = plot(
         xlabel="Temperatura",
         ylabel="Densidade de corrente de Saturação",
-        legend = :bottomright
+        legend = :bottomright,
+        grid = true,
+        minorgrid = true,
+        minorgridalpha=0.3,
+        gridalpha=0.3
     )
 
     @. richardson(T, params) = params[1] * (T^2) * exp(-params[2] / T)
@@ -305,35 +317,49 @@ let
     correntes_J = typeof(1.0u"A/m^2")[]
 
     for (temperatura, filamento, polos) in registros_child_langmur
-        index = findfirst(x -> x.V >= 300, polos) 
-		current_A = polos[index].I * u"A"
-		temp_C = temperatura * u"°C"
-		temp_K = uconvert(u"K", temp_C)
-		current_density_J = current_A / local_area
-		push!(correntes_J, current_density_J)
-		push!(temperaturas_K, temp_K)
+        index = findfirst(x -> x.V >= 300, polos)
+        current_A = polos[index].I * u"A"
+        temp_C = temperatura * u"°C"
+        temp_K = uconvert(u"K", temp_C)
+        current_density_J = current_A / local_area
+        push!(correntes_J, current_density_J)
+        push!(temperaturas_K, temp_K)
+    end
 
-    end 
-    
     temperaturas_fit = [ustrip(u"K",T) for T in temperaturas_K]
     correntes_fit = [ustrip(u"A/m^2", J) for J in correntes_J]
 
     fit = curve_fit(richardson, temperaturas_fit, correntes_fit, [1.0, 1.0])
-    params = coef(fit)
     
+    params = coef(fit)
+    se = stderror(fit)
+    
+
     scatter!(plt, temperaturas_K, correntes_J, label="Dados")
 
     temp_range_K = range(minimum(temperaturas_K), maximum(temperaturas_K), 100)
-    
     J_fit_values = richardson(ustrip(temp_range_K), params)
     
-    plot!(plt, temp_range_K, 
-          J_fit_values * u"A/m^2", 
+    plot!(plt, temp_range_K,
+          J_fit_values * u"A/m^2",
           label="Richardson-Dushman")
-	k=1.380649e-23
-	joule_to_ev=6.2415e18
-    println("W=$(params[2]*k*joule_to_ev)")
-	println("A=$(params[1])")
+    
+    k=1.380649e-23
+    joule_to_ev=6.2415e18
+    
+    
+    A_fit = params[1]
+    B_fit = params[2] 
+    
+    err_A = se[1]
+    err_B = se[2]
+
+    W = B_fit * k * joule_to_ev
+    err_W = err_B * k * joule_to_ev 
+    
+    println("W = $(W) ± $(err_W) eV")
+    println("A = $(A_fit) ± $(err_A) A/(m²K²)")
+    
     savefig(plt, "richardson-dushman.png")
     plt
 end
@@ -348,7 +374,11 @@ let
     fig_filamento = plot(
         xlabel="Tensão no Filamento (V)",
         ylabel="Temperatura no Filamento (ºC)",
-		dpi=300
+		dpi=300,
+		grid = true,
+    	minorgrid = true,  
+		minorgridalpha=0.3,
+		gridalpha=0.3
     )
     @. linear_fit(V, params) = params[1] * V + params[2]
 
@@ -378,9 +408,13 @@ md"""
 ## Razão $\frac{e}{m}$
 """
 
-# ╔═╡ 25a1c697-8fea-4ceb-9a53-dd579d9a3f91
-let
-	registros_e_over_m=[
+# ╔═╡ b9b79bc1-65e8-44c1-ac03-ecd02aa40cad
+md"""
+### Dados
+"""
+
+# ╔═╡ 02d7bd94-6c08-4ef0-9336-b9c481d4a1f4
+registros_e_over_m=[
 		 (temperatura=1524,
 		 filamento=4.2,
 	      medidas=[
@@ -460,22 +494,27 @@ let
 	      (1.969,6.4740e-6)
 	       ]
 		)
-		
 	]
-	
+
+
+# ╔═╡ 25a1c697-8fea-4ceb-9a53-dd579d9a3f91
+let
 	distancia_entre_polos=2e-2
 	diametro_circunferencia_polo=3e-3
 	N=130
 	raio_direto_bobina=13e-2
 	diametro_bobina=30e-2
 	μ=4π*10^-7
-	I_to_B=(4.0/5.0)^(3.0/2.0)*(N*μ/(raio_direto_bobina))
-	
+	I_to_B=(4.0/5.0)^(3.0/2.0)*(N*μ/(diametro_bobina/2.0))
 	
 	fig=plot(
 		xlabel="Campo magnético Bobinas-Helmholtz (mT)",
 		ylabel="Corrente Cátodo-Ânodo (μA)",
 		legendtitle="Temperatura (ºC)",
+		grid = true,
+    	minorgrid = true,  
+		minorgridalpha=0.3,
+		gridalpha=0.3,
 		dpi=400
 	)
 	lines_per_temp=Dict(
@@ -505,7 +544,7 @@ let
         )
 	  B_corte=B_espirra[start_line]*1e-3
 	  push!(B_cortes,B_corte)
-	  push!(razao,2voltagem_catodo_anodo/((2e-2B_corte)^2))
+	  push!(razao,2voltagem_catodo_anodo/((distancia_entre_polos*B_corte)^2))
 	  B_espirra=B_espirra[start_line:end_line]
 	  B_polos=B_polos[start_line:end_line]
 	  fit=curve_fit(linear_regression,B_espirra,B_polos,[1.0,1.0])
@@ -520,7 +559,7 @@ let
 	println(razao_media)
 	println(razao)
 	println("Q/m_real=-1.758e-11")
-	println("Q/m=$(mean(razao))")
+	println("Q/m=$(mean(razao)) + $(std(razao))")
 	savefig("razao_e_sobre_m.png")
 	fig
 end
@@ -1973,14 +2012,16 @@ version = "1.9.2+0"
 # ╟─4f238244-6b34-4ebc-87a2-a9b3e76ec417
 # ╟─ad80671b-8318-4fbf-9d1b-617b2fd592f4
 # ╟─b461344c-504d-40ea-bbad-1fc088662110
-# ╟─55d5a8ee-e4a7-4681-a178-9beb1f31fc71
+# ╠═55d5a8ee-e4a7-4681-a178-9beb1f31fc71
 # ╟─f2fd530a-c053-4d7e-99fa-eb7857ac3568
-# ╟─aa557509-7581-4c89-b0cb-f5fc9a0c46c2
+# ╠═aa557509-7581-4c89-b0cb-f5fc9a0c46c2
 # ╟─1d2aed94-cd07-484d-afc9-0f84610f9562
 # ╠═1944d819-d260-4ab4-b0b0-959acaac4e24
 # ╟─f4e05b9a-130a-438d-a0e9-3fa87a99711f
-# ╟─90e1aa89-f87b-448a-a276-2907b67fffcf
+# ╠═90e1aa89-f87b-448a-a276-2907b67fffcf
 # ╟─081c83c4-89d3-4a5d-a0ef-1d3d8de3776b
-# ╟─25a1c697-8fea-4ceb-9a53-dd579d9a3f91
+# ╟─b9b79bc1-65e8-44c1-ac03-ecd02aa40cad
+# ╟─02d7bd94-6c08-4ef0-9336-b9c481d4a1f4
+# ╠═25a1c697-8fea-4ceb-9a53-dd579d9a3f91
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
