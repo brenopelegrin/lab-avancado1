@@ -12,7 +12,8 @@
 		"vscode": {
 			"extensions": [
 				"ms-toolsai.jupyter",
-				"mechatroner.rainbow-csv"
+				"mechatroner.rainbow-csv",
+				"Muhammad-Ahmad.xlsx-viewer"
 			]
 		}
 	}
