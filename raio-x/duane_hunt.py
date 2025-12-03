@@ -3,7 +3,7 @@ import scipy as sci
 import numpy as np
 import os
 from tools import *
-directory = "/workspaces/lab-avancado1/raio-x/breno_e_vinicius/bv-lambdamin-sem-zr"
+directory = "breno_e_vinicius/bv-lambdamin-sem-zr"
 files = [x for x in os.listdir(directory) if x.endswith(".dat")]
 files.sort()
 plt.style.use("ggplot")
@@ -31,10 +31,12 @@ voltagem_marcador={
     7:23.03,
     8:25.69
 }
+cmap = plt.get_cmap('plasma')
+colors = [cmap(i) for i in np.linspace(0, 1, len(files))]
 
-for file in files:
+for i, file in enumerate(files):
     x,y=read_file(os.path.join(directory, file))
-    ax.plot(degree_to_lambda(x)*1e12, y, label=file.replace(".dat", ""))
+    ax.plot(degree_to_lambda(x)*1e12, y, label=file.replace(".dat", ""), color=colors[i])
 ax.set_xlabel("Lambda (pm)")
 ax.set_ylabel("Contagem")
 ax.set_yscale("log")
@@ -55,11 +57,12 @@ lambdas_min=np.array(lambdas_min)
 lambdas_min*=1e12
 ax.scatter(1/voltagens, lambdas_min, color="red", label="Dados experimentais")
 popt, pcov = sci.optimize.curve_fit(lambda x, a: a / x, voltagens, lambdas_min)
+perr = np.sqrt(np.diag(pcov))
 x_fit = np.linspace(min(voltagens), max(voltagens), 100)
 y_fit = popt[0] / x_fit
 y_esperado=1239.8/x_fit
-ax.plot(1/x_fit, y_fit, label=f"Ajuste: λ = {popt[0]:.3e} / V", color="blue")
-ax.plot(1/x_fit, y_esperado, label="Teórico: λ = 1.238e+03 / V", color="green", linestyle="--")
+ax.plot(1/x_fit, y_fit, label=f"Ajuste: λ = ({popt[0]:.1f} ± {perr[0]:.1f}) / V", color="blue")
+ax.plot(1/x_fit, y_esperado, label="Teórico: λ = 1.240e+03 / V", color="green", linestyle="--")
 ax.legend()
 
 ax.grid(True)
