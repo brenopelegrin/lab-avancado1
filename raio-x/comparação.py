@@ -42,7 +42,7 @@ def interpolate_log_log_antonio(E_target, E1, mu1, E2, mu2):
 
 
 plt.style.use("ggplot")
-fig,ax=plt.subplots(figsize=(6,6),dpi=150)
+fig,ax=plt.subplots(figsize=(6,5),dpi=300)
 ax.grid(True)
 ax.set_xlabel("Número atômico (Z)")
 ax.set_ylabel(r"Coeficiente de absorção ($\frac{\mu}{\rho}$)")
@@ -112,3 +112,44 @@ ax.plot(Z_values, mu_over_rho_values, color='black',linewidth=0.5,linestyle='das
 ax.legend()
 
 fig.savefig("comparacao.png")
+
+# --- Create the new plot with Z^3 on the x-axis ---
+
+fig_z3, ax_z3 = plt.subplots(figsize=(6, 5), dpi=300)
+ax_z3.grid(True)
+ax_z3.set_xlabel("Número atômico (Z³)")
+ax_z3.set_ylabel(r"Coeficiente de absorção ($\frac{\mu}{\rho}$)")
+fig_z3.tight_layout()
+
+# Plot experimental data with Z^3
+for index, row in df_exp.iterrows():
+    element_symbol = row['elemento']
+    atomic_number = row['n_atomico']
+    mu_rho = row['mu_over_rho']
+    color = element_colors.get(element_symbol, 'C0')
+    ax_z3.scatter(atomic_number**3, 
+                  mu_rho,  
+                  color=color,
+                  s=20,
+                  edgecolors='black',
+                  zorder=3)
+    ax_z3.text(atomic_number**3 * 1.1, # Adjust text position
+               mu_rho, element_symbol, 
+               verticalalignment='center',
+               color="blue")
+
+# Plot Compton data with Z^3
+for i, Z in enumerate(Z_values):
+    if Z in compton_dict:
+        if i == 1:
+            ax_z3.scatter(Z**3, compton_dict[Z], color='red', s=10, label='Compton', alpha=0.4)
+        else:
+            ax_z3.scatter(Z**3, compton_dict[Z], color='red', s=10, alpha=0.4)
+
+# Plot NIST data with Z^3
+Z_values_cubed = Z_values**3
+ax_z3.scatter(Z_values_cubed, mu_over_rho_values, label='NIST', color='black', s=10, alpha=0.4)
+ax_z3.plot(Z_values_cubed, mu_over_rho_values, color='black', linewidth=0.5, linestyle='dashed')
+
+ax_z3.legend()
+fig_z3.savefig("comparacao_z3.png")
